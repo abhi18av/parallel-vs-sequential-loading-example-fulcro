@@ -19,7 +19,11 @@
      (update ::pc/index-resolvers #(into [] (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into [] (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [acct/resolvers session/resolvers index-explorer])
+(pc/defresolver long-query-resolver [_ _]
+                {::pc/output [:background/long-query]}
+                {:background/long-query 42})
+
+(def all-resolvers [acct/resolvers session/resolvers index-explorer long-query-resolver])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.

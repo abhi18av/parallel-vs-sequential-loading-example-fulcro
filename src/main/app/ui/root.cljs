@@ -10,6 +10,7 @@
     [com.fulcrologic.fulcro.components :as comp]
     [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
     [taoensso.timbre :as log]
+    [com.fulcrologic.fulcro.data-fetch :as df]
     [com.fulcrologic.fulcro-css.css :as css]
     [com.fulcrologic.fulcro.algorithms.form-state :as fs]
     [clojure.string :as str]))
@@ -267,6 +268,28 @@
 
 
 
+(defsc Child [this {:keys [id name background/long-query] :as props}]
+       {:query (fn [] [:id :name :background/long-query [df/marker-table '_]])
+        :ident [:background.child/by-id :id]}
+       (let [status (get-in props [df/marker-table [:fetching id]])]
+            (dom/div {:style {:display "inline" :float "left" :width "200px"}}
+                     (dom/button {:onClick #(df/load-field! this :background/long-query {:parallel true
+                                                                                         :marker   [:fetching id]})} "Load stuff parallel")
+                     (dom/button {:onClick #(df/load-field! this :background/long-query {:marker [:fetching id]})} "Load stuff sequential")
+                     (dom/div
+                       name
+                       (if (df/loading? status)
+                         (dom/span "Loading...")
+                         (dom/span long-query))))))
 
+(def ui-child (comp/factory Child {:keyfn :id}))
+
+(defsc Root [this {:keys [children] :as props}]
+       ; cheating a little...raw props used for child, instead of embedding them there.
+       {:initial-state (fn [params] {:children [{:id 1 :name "A"} {:id 2 :name "B"} {:id 3 :name "C"}]})
+        :query         [{:children (comp/get-query Child)}]}
+       (dom/div
+         (mapv ui-child children)
+         (dom/br {:style {:clear "both"}}) (dom/br)))
 
 
